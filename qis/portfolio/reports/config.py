@@ -2,7 +2,7 @@
 configuration for performance reports
 """
 from typing import Dict, Any, Tuple
-from qis import PerfParams, BenchmarkReturnsQuantileRegimeSpecs, TimePeriod, PerfStat, PerformanceLabel
+from qis import PerfParams, BenchmarkReturnsQuantileRegimeSpecs, TimePeriod, PerfStat, PerfStatsLabels
 import yfinance as yf
 
 # default params have no risk-free rate
@@ -14,6 +14,7 @@ PERF_COLUMNS = (PerfStat.TOTAL_RETURN,
                 PerfStat.VOL,
                 PerfStat.SHARPE_EXCESS,
                 PerfStat.MAX_DD,
+                PerfStat.MAX_DD_VOL,
                 PerfStat.SKEWNESS,
                 PerfStat.ALPHA_AN,
                 PerfStat.BETA,
@@ -47,7 +48,7 @@ def fetch_default_report_kwargs(time_period: TimePeriod,
                              regime_params=BenchmarkReturnsQuantileRegimeSpecs(freq='QE'),
                              perf_columns=PERF_COLUMNS,
                              short=True,  # ra columns
-                             performance_label=PerformanceLabel.DETAILED_EXCESS_SHARPE,
+                             perf_stats_labels=(PerfStat.PA_RETURN, PerfStat.VOL, PerfStat.SHARPE_EXCESS, ),
                              heatmap_freq='YE',
                              x_date_freq='YE',
                              date_format='%b-%y')
@@ -57,10 +58,39 @@ def fetch_default_report_kwargs(time_period: TimePeriod,
                              regime_params=BenchmarkReturnsQuantileRegimeSpecs(freq='ME'),
                              perf_columns=PERF_COLUMNS,
                              short=True,  # ra columns
-                             performance_label=PerformanceLabel.DETAILED_EXCESS_SHARPE,
+                             perf_stats_labels=(PerfStat.PA_RETURN, PerfStat.VOL, PerfStat.SHARPE_EXCESS, ),
                              heatmap_freq='QE',
                              x_date_freq='QE',
                              date_format='%b-%y')
 
     return report_kwargs
 
+# for pybloqs
+margin_top = 1.0
+margin_bottom = 1.0
+line_height = 0.99
+font_family = 'Calibri'
+KWARGS_SUPTITLE = {'title_wrap': True, 'text_align': 'center', 'color': 'blue', 'font_size': "12px", 'font-weight': 'normal',
+                   'title_level': 1, 'line_height': 0.7, 'inherit_cfg': False,
+                   'margin_top': 0, 'margin_bottom': 0,
+                   'font-family': 'sans-serif'}
+KWARGS_TITLE = {'title_wrap': True, 'text_align': 'left', 'color': 'blue', 'font_size': "12px",
+                'title_level': 1, 'line_height': line_height, 'inherit_cfg': False,
+                'margin_top': margin_top,  'margin_bottom': margin_bottom,
+                'font-family': font_family}
+KWARGS_DESC = {'title_wrap': True, 'text_align': 'left', 'font_size': "12px", 'font-weight': 'normal',
+               'title_level': 2, 'line_height': line_height, 'inherit_cfg': False,
+               'margin_top': margin_top, 'margin_bottom': margin_bottom,
+               'font-family': font_family}
+KWARGS_TEXT = {'title_wrap': True, 'text_align': 'left', 'font_size': "12px", 'font-weight': 'normal',
+               'title_level': 2, 'line_height': line_height, 'inherit_cfg': False,
+               'margin_top': margin_top, 'margin_bottom': margin_bottom,
+               'font-family': font_family}
+KWARGS_FIG = {'title_wrap': True, 'text_align': 'left', 'font_size': "12px",
+              'title_level': 2, 'line_height': line_height, 'inherit_cfg': False,
+              'margin_top': margin_top, 'margin_bottom': margin_bottom,
+              'font-family': font_family}
+KWARGS_FOOTNOTE = {'title_wrap': True, 'text_align': 'left', 'font_size': "12px", 'font-weight': 'normal',
+                   'title_level': 3, 'line_height': line_height, 'inherit_cfg': False,
+                   'margin_top': margin_top, 'margin_bottom': margin_bottom,
+                   'font-family': font_family}
