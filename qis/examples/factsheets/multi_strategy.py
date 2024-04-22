@@ -27,8 +27,8 @@ def fetch_riskparity_universe_data() -> Tuple[pd.DataFrame, pd.DataFrame, pd.Ser
                          GLD='Gold')
     tickers = list(universe_data.keys())
     group_data = pd.Series(universe_data)  # for portfolio reporting
-    prices = yf.download(tickers=tickers, start=None, end=None, ignore_tz=True)['Adj Close']
-    prices = prices.asfreq('B', method='ffill')[tickers]
+    prices = yf.download(tickers=tickers, start=None, end=None, ignore_tz=True)['Adj Close'][tickers]
+    prices = prices.asfreq('B', method='ffill').loc['2003': ]
     benchmark_prices = prices[['SPY', 'TLT']]
     return prices, benchmark_prices, group_data
 
@@ -69,7 +69,7 @@ def run_unit_test(unit_test: UnitTests):
 
     if unit_test == UnitTests.VOLPARITY_SPAN:
 
-        time_period = qis.TimePeriod('31Dec2005', '12Sep2023')  # time period for portfolio reporting
+        time_period = qis.TimePeriod('31Dec2005', '16Apr2024')  # time period for portfolio reporting
 
         prices, benchmark_prices, group_data = fetch_riskparity_universe_data()
         multi_portfolio_data = generate_volparity_multi_strategy(prices=prices,
@@ -78,24 +78,24 @@ def run_unit_test(unit_test: UnitTests):
                                                                  time_period=time_period,
                                                                  vol_target=0.15)
 
-        fig = generate_multi_portfolio_factsheet(multi_portfolio_data=multi_portfolio_data,
+        figs = generate_multi_portfolio_factsheet(multi_portfolio_data=multi_portfolio_data,
                                                  time_period=time_period,
                                                  **fetch_default_report_kwargs(time_period=time_period))
-        qis.save_figs_to_pdf(figs=[fig],
+        qis.save_figs_to_pdf(figs=figs,
                              file_name=f"volparity_span_factsheet_long",
                              orientation='landscape',
                              local_path=qis.local_path.get_output_path())
 
         time_period_short = TimePeriod('31Dec2019', time_period.end)
-        fig = generate_multi_portfolio_factsheet(multi_portfolio_data=multi_portfolio_data,
+        figs = generate_multi_portfolio_factsheet(multi_portfolio_data=multi_portfolio_data,
                                                  time_period=time_period_short,
                                                  **fetch_default_report_kwargs(time_period=time_period_short))
-        qis.save_figs_to_pdf(figs=[fig],
+        qis.save_figs_to_pdf(figs=figs,
                              file_name=f"volparity_span_factsheet_short",
                              orientation='landscape',
                              local_path=qis.local_path.get_output_path())
 
-        qis.save_fig(fig=fig, file_name=f"multi_strategy", local_path=qis.local_path.get_output_path())
+        qis.save_fig(fig=figs[0], file_name=f"multi_strategy", local_path=qis.local_path.get_output_path())
 
     # plt.show()
 

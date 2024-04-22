@@ -4,16 +4,15 @@ and generating sensitivities to parameters
 see example in qis.examples.factheets.multi_strategy.py
 """
 # packages
+import pandas as pd
 import matplotlib.pyplot as plt
-from typing import Tuple
-
+from typing import Tuple, List
 # qis
-import qis
+import qis as qis
 from qis import TimePeriod, PerfParams, PerfStat, BenchmarkReturnsQuantileRegimeSpecs
-
-# portfolio
 from qis.portfolio.multi_portfolio_data import MultiPortfolioData
 from qis.portfolio.reports.config import PERF_PARAMS, REGIME_PARAMS
+from qis.portfolio.reports.strategy_factsheet import generate_strategy_factsheet
 
 
 def generate_multi_portfolio_factsheet(multi_portfolio_data: MultiPortfolioData,
@@ -24,16 +23,19 @@ def generate_multi_portfolio_factsheet(multi_portfolio_data: MultiPortfolioData,
                                        backtest_name: str = None,
                                        heatmap_freq: str = 'YE',
                                        figsize: Tuple[float, float] = (8.3, 11.7),  # A4 for portrait
-                                       is_grouped: bool = False,
+                                       groups: pd.Series = None,
+                                       add_strategy_factsheets: bool = False,
                                        fontsize: int = 4,
                                        **kwargs
-                                       ) -> plt.Figure:
+                                       ) -> List[plt.Figure]:
     """
     for portfolio data with structurally different strategies
     for portfolios with large universe use is_grouped = True to report tunrover and exposures by groups
     """
-    if len(multi_portfolio_data.benchmark_prices.columns) < 2:
-        raise ValueError(f"pass at least two benchmarks for benchmark_prices in multi_portfolio_data")
+    if groups is not None:
+        is_grouped = True
+    else:
+        is_grouped = False
 
     if regime_benchmark is None:
         regime_benchmark = multi_portfolio_data.benchmark_prices.columns[0]
@@ -74,32 +76,30 @@ def generate_multi_portfolio_factsheet(multi_portfolio_data: MultiPortfolioData,
                                                        title='Rolling time under water',
                                                        **kwargs)
 
-    multi_portfolio_data.plot_exposures(ax=fig.add_subplot(gs[3, :2]),
+    multi_portfolio_data.plot_rolling_perf(ax=fig.add_subplot(gs[3, :2]),
+                                           time_period=time_period,
+                                           regime_benchmark=regime_benchmark,
+                                           regime_params=regime_params,
+                                           **kwargs)
+
+    multi_portfolio_data.plot_exposures(ax=fig.add_subplot(gs[4, :2]),
                                         portfolio_idx=0,
                                         time_period=time_period,
                                         benchmark=regime_benchmark,
                                         regime_params=regime_params,
                                         **kwargs)
 
-    multi_portfolio_data.plot_turnover(ax=fig.add_subplot(gs[4, :2]),
+    multi_portfolio_data.plot_turnover(ax=fig.add_subplot(gs[5, :2]),
                                        time_period=time_period,
                                        benchmark=regime_benchmark,
                                        regime_params=regime_params,
                                        **kwargs)
 
-    multi_portfolio_data.plot_costs(ax=fig.add_subplot(gs[5, :2]),
+    multi_portfolio_data.plot_costs(ax=fig.add_subplot(gs[6, :2]),
                                     time_period=time_period,
                                     benchmark=regime_benchmark,
                                     regime_params=regime_params,
                                     **kwargs)
-
-    # select two benchmarks for factor exposures
-    multi_portfolio_data.plot_factor_betas(axs=[fig.add_subplot(gs[6, :2]), fig.add_subplot(gs[6, 2:])],
-                                           benchmark_prices=multi_portfolio_data.benchmark_prices.iloc[:, :2],
-                                           time_period=time_period,
-                                           regime_benchmark=regime_benchmark,
-                                           regime_params=regime_params,
-                                           **kwargs)
 
     multi_portfolio_data.plot_performance_bars(ax=fig.add_subplot(gs[0, 2]),
                                                perf_params=perf_params,
@@ -135,25 +135,59 @@ def generate_multi_portfolio_factsheet(multi_portfolio_data: MultiPortfolioData,
                                          freq='W-WED',
                                          **qis.update_kwargs(kwargs, dict(fontsize=fontsize)))
 
-    multi_portfolio_data.plot_regime_data(ax=fig.add_subplot(gs[4, 2:]),
-                                          is_grouped=False,
-                                          time_period=time_period,
-                                          perf_params=perf_params,
-                                          regime_params=regime_params,
-                                          benchmark=multi_portfolio_data.benchmark_prices.columns[0],
-                                          **kwargs)
-    multi_portfolio_data.plot_regime_data(ax=fig.add_subplot(gs[5, 2:]),
-                                          is_grouped=False,
-                                          time_period=time_period,
-                                          perf_params=perf_params,
-                                          regime_params=regime_params,
-                                          benchmark=multi_portfolio_data.benchmark_prices.columns[1],
-                                          **kwargs)
-    """
-    multi_portfolio_data.plot_returns_scatter(ax=fig.add_subplot(gs[5, 2:]),
+    if len(multi_portfolio_data.benchmark_prices.columns) > 1:
+        multi_portfolio_data.plot_regime_data(ax=fig.add_subplot(gs[4, 2]),
+                                              is_grouped=is_grouped,
                                               time_period=time_period,
-                                              benchmark=regime_benchmark,
+                                              perf_params=perf_params,
+                                              regime_params=regime_params,
+                                              benchmark=multi_portfolio_data.benchmark_prices.columns[0],
                                               **kwargs)
-    """
+        multi_portfolio_data.plot_regime_data(ax=fig.add_subplot(gs[4, 3]),
+                                              is_grouped=is_grouped,
+                                              time_period=time_period,
+                                              perf_params=perf_params,
+                                              regime_params=regime_params,
+                                              benchmark=multi_portfolio_data.benchmark_prices.columns[1],
+                                              **kwargs)
+    else:
+        multi_portfolio_data.plot_regime_data(ax=fig.add_subplot(gs[4, 2:]),
+                                              is_grouped=is_grouped,
+                                              time_period=time_period,
+                                              perf_params=perf_params,
+                                              regime_params=regime_params,
+                                              benchmark=multi_portfolio_data.benchmark_prices.columns[0],
+                                              **kwargs)
+    if len(multi_portfolio_data.benchmark_prices.columns) > 1:
+        multi_portfolio_data.plot_factor_betas(axs=[fig.add_subplot(gs[5, 2:]), fig.add_subplot(gs[6, 2:])],
+                                               benchmark_prices=multi_portfolio_data.benchmark_prices,
+                                               time_period=time_period,
+                                               regime_benchmark=regime_benchmark,
+                                               regime_params=regime_params,
+                                               **kwargs)
+    else:
+        multi_portfolio_data.plot_returns_scatter(ax=fig.add_subplot(gs[5, 2:]),
+                                                  time_period=time_period,
+                                                  benchmark=multi_portfolio_data.benchmark_prices.columns[0],
+                                                  **kwargs)
 
-    return fig
+        multi_portfolio_data.plot_factor_betas(axs=[fig.add_subplot(gs[6, 2:])],
+                                               benchmark_prices=multi_portfolio_data.benchmark_prices,
+                                               time_period=time_period,
+                                               regime_benchmark=regime_benchmark,
+                                               regime_params=regime_params,
+                                               **kwargs)
+    figs = [fig]
+    if add_strategy_factsheets:
+        for portfolio_data in multi_portfolio_data.portfolio_datas:
+            figs.append(generate_strategy_factsheet(portfolio_data=portfolio_data,
+                                                    benchmark_prices=multi_portfolio_data.benchmark_prices,
+                                                    perf_params=perf_params,
+                                                    regime_params=regime_params,
+                                                    add_grouped_exposures=is_grouped,
+                                                    time_period=time_period,
+                                                    **kwargs
+                                                    ))
+        figs = qis.to_flat_list(figs)
+
+    return figs

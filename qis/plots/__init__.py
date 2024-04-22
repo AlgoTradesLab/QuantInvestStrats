@@ -99,18 +99,15 @@ from qis.plots.time_series import (
 
 
 from qis.plots.derived.prices import (
-    PerformanceLabel,
     add_bnb_regime_shadows,
-    compute_rolling_sharpes,
-    compute_rolling_skew,
-    compute_sharpe,
-    compute_skew,
-    get_performance_labels,
+    get_performance_labels_for_stats,
+    get_performance_labels_for_stats,
+    PerfStatsLabels,
     plot_prices,
     plot_prices_2ax,
     plot_prices_with_dd,
     plot_prices_with_fundamentals,
-    plot_rolling_sharpe
+    plot_rolling_perf_stat
 )
 
 from qis.plots.derived.data_timeseries import plot_data_timeseries
@@ -137,7 +134,8 @@ from qis.plots.derived.regime_scatter import plot_scatter_regression
 
 from qis.plots.derived.returns_heatmap import (
     compute_periodic_returns_by_row_table,
-    get_periodic_returns_table,
+    compute_periodic_returns_table,
+    compute_periodic_returns,
     plot_periodic_returns_table,
     plot_returns_heatmap,
     plot_returns_table,
